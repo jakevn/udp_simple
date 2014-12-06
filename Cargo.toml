@@ -1,0 +1,17 @@
+[package]
+
+name = "udp_simple"
+description = "Simple UDP library with basic reliability and connections."
+version = "0.0.1"
+authors = [ "Jacob Van Noort <jakevn@gmail.com>" ]
+license = "MIT"
+
+[[bin]]
+
+name = "simple_client"
+path = "examples/simple_client.rs"
+
+[[bin]]
+
+name = "simple_server"
+path = "examples/simple_server.rs"
