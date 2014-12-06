@@ -1,9 +1,9 @@
-extern crate bumby_rust;
+extern crate udp_simple;
 
 use std::io::timer;
 use std::time::Duration;
 
-use bumby_rust::{Socket,Connection,SocketEvent};
+use udp_simple::{Socket,Connection,SocketEvent};
 
 struct SockTest {
     received: u64,

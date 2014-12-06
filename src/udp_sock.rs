@@ -5,7 +5,7 @@ use std::io::net::udp::UdpSocket;
 use std::io::net::ip::SocketAddr;
 
 use socket::{Packet, FailReason, SocketCommand, SocketEvent};
-use internal_connection::UdpConn;
+use udp_conn::UdpConn;
 use connection::Connection;
 use socket::SocketEvent::*;
 use socket::SocketCommand::*;

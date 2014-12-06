@@ -3,7 +3,7 @@ use std::io::net::ip::SocketAddr;
 use std::str::FromStr;
 
 use connection::Connection;
-use internal_socket::UdpSock;
+use udp_sock::UdpSock;
 
 // Socket contains the API implementation. It provides
 // an interface for sending/receiving from/to and configuring
