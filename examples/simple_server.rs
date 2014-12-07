@@ -5,7 +5,6 @@ use std::time::Duration;
 
 use udp_simple::{Socket,Connection,SocketEvent};
 
-
 struct SockTest {
     received: u64,
     conn: Option<Connection>,
