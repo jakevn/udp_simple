@@ -22,9 +22,8 @@ struct UnreliableChannel {
 
 struct ReliableChannel {
 	write_buff: [u8, ..1400],
-	buff_empty: bool,
 	buff_sent: bool,
-	buff_pos: u16,
+	buff_pos: uint,
 	ordered_buff: Vec<[u8, ..1400]>,
 	unacked_sent: Vec<[u8, ..1400]>,
 	newest_remote_seq: u16,
@@ -38,14 +37,33 @@ struct ReliableChannel {
 
 impl ReliableChannel {
 
-	// If we have a non-empty buff, we will write the reliable header
+	pub fn new() -> ReliableChannel {
+		ReliableChannel {
+			write_buff: [0, ..1400],
+			buff_sent: false,
+			buff_pos: 4,
+			ordered_buff: Vec::new(),
+			unacked_sent: Vec::new(),
+			newest_remote_seq: 0,
+			local_seq: 0,
+			ack_hist: 0,
+			last_send_time: 0,
+			last_recv_time: 0,
+			last_remote_seq: 0,
+			recv_since_last_send: 0,
+		}
+	}
+
+	// If we have a non-empty buffer, we will write the reliable header
 	// and return the ready-to-send byte buffer and update state to reflect
 	// that it is now sent. If buffer not ready to send, return None:
-	pub fn get_buff_for_sending(&mut self) -> Option<&[u8, ..1400]> {
-		if self.buff_empty {
+	pub fn get_buff_for_sending(&mut self, time: u32) -> Option<&[u8, ..1400]> {
+		if self.buff_pos == 19 {
 			None
 		} else {
 			self.buff_sent = true;
+			let header = self.create_header(time);
+
 			Some(&self.write_buff)
 		}
 	}
@@ -78,16 +96,35 @@ impl ReliableChannel {
 		}
 	}
 
-	pub fn buff_has_room(&self, byte_count: u16) -> bool {
+	fn advance_local_seq(&mut self) {
+		self.local_seq = (self.local_seq + 1) & 32767;
+	}
+
+	pub fn buff_has_room(&self, byte_count: uint) -> bool {
 		self.buff_pos + byte_count <= 1400
 	}
 
 	pub fn add_to_buff(&mut self, bytes: [u8, ..1400]) {
+		let mut p = 0;
+		for i in range(self.buff_pos, bytes.len()) {
+			self.write_buff[i] = bytes[p];
+			p = p + 1;
+			self.buff_pos = self.buff_pos + 1;
+		}
+	}
 
+	fn read_header(buff: &[u8, ..1400]) -> ReliableHeader {
+		
 	}
 
 	pub fn reset_buff(&mut self) {
-		
+		let sent_buff = self.write_buff;
+		self.advance_local_seq();
+		self.recv_since_last_send = 0;
+		self.unacked_sent.push(sent_buff);
+		self.write_buff = [0, ..1400];
+		self.buff_sent = false;
+		self.buff_pos = 19;
 	}
 
 }
