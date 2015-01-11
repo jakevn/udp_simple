@@ -15,3 +15,6 @@ path = "examples/simple_client.rs"
 
 name = "simple_server"
 path = "examples/simple_server.rs"
+
+[profile.dev]
+opt-level = 3

@@ -32,14 +32,14 @@ fn socket_loop(mut sock: Socket) {
             None => {},
         };
         
-        timer::sleep(Duration::milliseconds(10));
+        timer::sleep(Duration::milliseconds(15));
     }
 }
 
 fn send_ten_times(c: Connection, sock: &mut Socket) {
-    //for _ in range(0i, 50) {
+    for _ in range(0i, 1) {
         sock.send_reliable([0, ..1400], c);
-    //}
+    }
 }
 
 fn route_socket_event(ev: SocketEvent, mut st: SockTest, sock: &mut Socket) -> SockTest {

@@ -1,6 +1,8 @@
 use std::io::net::udp::UdpSocket;
 use std::io::net::ip::SocketAddr;
+use std::sync::mpsc::*;
 use std::str::FromStr;
+use std::thread::Thread;
 
 use connection::Connection;
 use udp_sock::UdpSock;
@@ -26,8 +28,8 @@ pub struct SocketConfig {
 
 pub struct Packet {
     pub connection: Connection,
-    pub size: uint,
-    pub data: [u8, ..1400],
+    pub size: u16,
+    pub data: [u8; 1400],
 }
 
 pub const DEFAULT_SERVER: SocketConfig = SocketConfig {
@@ -70,12 +72,6 @@ pub enum FailReason {
     Denied, // Action was denied by policy
 }
 
-impl Iterator<SocketEvent> for Socket {
-    fn next(&mut self) -> Option<SocketEvent> {
-        self.poll()
-    }
-}
-
 impl Socket {
 
     pub fn create(address: &str) -> Option<Socket> {
@@ -105,7 +101,7 @@ impl Socket {
             packet_send_rx: pack_send_rx,
             packet_recv_tx: pack_recv_tx,
         };
-        spawn(proc() { internal_sock.poll_loop() } );
+        Thread::spawn(move || { internal_sock.poll_loop() } );
         Socket {
             address: a,
             com_send: comm_tx,
@@ -124,15 +120,15 @@ impl Socket {
         self.com_send.send(SocketCommand::Connect(FromStr::from_str(to_addr).unwrap()));
     }
 
-    pub fn send_unreliable(&mut self, data: [u8, ..1400], to: &Connection) {
+    pub fn send_unreliable(&mut self, data: [u8; 1400], to: &Connection) {
         self.send(data, to.addr);
     }
 
-    pub fn send_reliable(&mut self, data: [u8, ..1400], to: Connection) {
+    pub fn send_reliable(&mut self, data: [u8; 1400], to: Connection) {
         self.send(data, to.addr);
     }
 
-    fn send(&mut self, data: [u8, ..1400], addr: SocketAddr) {
+    fn send(&mut self, data: [u8; 1400], addr: SocketAddr) {
         self.packet_send.send(Packet {
             connection: Connection::new(addr, 0),
             size: 1400, data: data

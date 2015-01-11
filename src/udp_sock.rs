@@ -1,8 +1,8 @@
 use std::io::timer;
 use std::time::Duration;
-
 use std::io::net::udp::UdpSocket;
 use std::io::net::ip::SocketAddr;
+use std::sync::mpsc::*;
 
 use socket::{Packet, FailReason, SocketCommand, SocketEvent};
 use udp_conn::UdpConn;
@@ -30,7 +30,7 @@ impl UdpSock {
 
 	pub fn poll_loop(mut self) {
 
-        let mut buf = [0, ..1400]; // Received data buffer
+        let mut buf = [0u8; 1400]; // Received data buffer
         let mut reset_sleep_curr = false; // If sleep_curr should be reset to sleep_base
         let mut sleep_curr = 5; // Sleep time (ms) that increments by 1 for each uneventful loop
         let sleep_base = 0; // If we've received an event, reset sleep time to this
@@ -53,7 +53,7 @@ impl UdpSock {
                     Ok((amt, src)) if amt > 1 => {
                         self.packet_recv_tx.send(Packet {
                         	connection: Connection::new(src, 0),
-                        	size: amt,
+                        	size: amt as u16,
                         	data: buf
                         });
                     },

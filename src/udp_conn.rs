@@ -17,15 +17,15 @@ struct ReliableHeader {
 }
 
 struct UnreliableChannel {
-	write_buff: [u8, ..1400],
+	write_buff: [u8; 1400],
 }
 
 struct ReliableChannel {
-	write_buff: [u8, ..1400],
+	write_buff: Vec<u8>,
 	buff_sent: bool,
-	buff_pos: uint,
-	ordered_buff: Vec<[u8, ..1400]>,
-	unacked_sent: Vec<[u8, ..1400]>,
+	buff_pos: u16,
+	ordered_buff: Vec<Vec<u8>>,
+	unacked_sent: Vec<Vec<u8>>,
 	newest_remote_seq: u16,
 	local_seq: u16,
 	ack_hist: u64,
@@ -39,7 +39,7 @@ impl ReliableChannel {
 
 	pub fn new() -> ReliableChannel {
 		ReliableChannel {
-			write_buff: [0, ..1400],
+			write_buff: Vec::new(),
 			buff_sent: false,
 			buff_pos: 4,
 			ordered_buff: Vec::new(),
@@ -57,8 +57,8 @@ impl ReliableChannel {
 	// If we have a non-empty buffer, we will write the reliable header
 	// and return the ready-to-send byte buffer and update state to reflect
 	// that it is now sent. If buffer not ready to send, return None:
-	pub fn get_buff_for_sending(&mut self, time: u32) -> Option<&[u8, ..1400]> {
-		if self.buff_pos == 19 {
+	pub fn get_buff_for_sending(&mut self, time: u32) -> Option<&Vec<u8>> {
+		if self.buff_pos <= 19 {
 			None
 		} else {
 			self.buff_sent = true;
@@ -100,29 +100,28 @@ impl ReliableChannel {
 		self.local_seq = (self.local_seq + 1) & 32767;
 	}
 
-	pub fn buff_has_room(&self, byte_count: uint) -> bool {
+	pub fn buff_has_room(&self, byte_count: u16) -> bool {
 		self.buff_pos + byte_count <= 1400
 	}
 
-	pub fn add_to_buff(&mut self, bytes: [u8, ..1400]) {
+	pub fn add_to_buff(&mut self, bytes: &[u8]) {
 		let mut p = 0;
-		for i in range(self.buff_pos, bytes.len()) {
-			self.write_buff[i] = bytes[p];
+		for i in range(self.buff_pos, bytes.len() as u16) {
+			self.write_buff[i as usize] = bytes[p];
 			p = p + 1;
 			self.buff_pos = self.buff_pos + 1;
 		}
 	}
 
-	fn read_header(buff: &[u8, ..1400]) -> ReliableHeader {
-		
-	}
+	/*fn read_header(buff: &[u8, ..1400]) -> ReliableHeader {
+
+	}*/
 
 	pub fn reset_buff(&mut self) {
-		let sent_buff = self.write_buff;
 		self.advance_local_seq();
 		self.recv_since_last_send = 0;
-		self.unacked_sent.push(sent_buff);
-		self.write_buff = [0, ..1400];
+		self.unacked_sent.push(self.write_buff);
+		self.write_buff = Vec::new();
 		self.buff_sent = false;
 		self.buff_pos = 19;
 	}

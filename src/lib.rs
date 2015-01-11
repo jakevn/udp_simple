@@ -1,4 +1,3 @@
-#![feature(globs)]
 #![feature(slicing_syntax)]
 
 #![crate_name = "udp_simple"]
