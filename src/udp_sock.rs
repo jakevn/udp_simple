@@ -9,6 +9,7 @@ use udp_conn::UdpConn;
 use connection::Connection;
 use socket::SocketEvent::*;
 use socket::SocketCommand::*;
+use bitbuf::BitBuf;
 
 pub struct UdpSock {
     pub udp: UdpSocket,
