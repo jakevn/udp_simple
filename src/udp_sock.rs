@@ -28,7 +28,7 @@ pub const ACCEPT: u8 = 6u8;
 
 impl UdpSock {
 
-	pub fn poll_loop(mut self) {
+    pub fn poll_loop(mut self) {
 
         let mut buf = [0u8; 1400]; // Received data buffer
         let mut reset_sleep_curr = false; // If sleep_curr should be reset to sleep_base
@@ -52,13 +52,13 @@ impl UdpSock {
                 match self.udp.recv_from(&mut buf) {
                     Ok((amt, src)) if amt > 1 => {
                         self.packet_recv_tx.send(Packet {
-                        	connection: Connection::new(src, 0),
-                        	size: amt as u16,
-                        	data: buf
+                            connection: Connection::new(src, 0),
+                            size: amt as u16,
+                            data: buf
                         });
                     },
                     Ok((amt, src)) if amt > 0 => {
-                    	self.event_send.send(UdpSock::parse_signal(src, buf[0]));
+                        self.event_send.send(UdpSock::parse_signal(src, buf[0]));
                     },
                     _ => break 'receive,
                 };
@@ -87,10 +87,10 @@ impl UdpSock {
     fn execute_command(&mut self, c: SocketCommand) {
         match c {
             Connect(adr) => {
-            	self.udp.send_to(&[2u8], adr);
+                self.udp.send_to(&[2u8], adr);
             },
             Disconnect(adr) => {
-            	self.udp.send_to(&[3u8], adr);
+                self.udp.send_to(&[3u8], adr);
             },
             AcceptConn(adr) => {
                 self.udp.send_to(&[6u8],adr);
