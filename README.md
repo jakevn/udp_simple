@@ -1,6 +1,6 @@
 udp_simple
 ==========
-WIP
+[![Build Status](https://travis-ci.org/jakevn/udp_simple.svg)](https://travis-ci.org/jakevn/udp_simple)
 
 
 Goal
