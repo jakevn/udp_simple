@@ -4,13 +4,14 @@
 #![crate_type="lib"]
 
 extern crate bitbuf;
+extern crate time;
 
-pub use socket::*;
-pub use connection::*;
 pub use udp_sock::*;
-pub use udp_conn::*;
 
-pub mod socket;
-pub mod connection;
 pub mod udp_sock;
-pub mod udp_conn;
+
+use udp_conn::*;
+use udp_reliable::*;
+
+mod udp_conn;
+mod udp_reliable;

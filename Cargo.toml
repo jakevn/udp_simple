@@ -7,18 +7,10 @@ authors = [ "Jacob Van Noort <jakevn@gmail.com>" ]
 license = "MIT"
 
 [dependencies.bitbuf]
-
 git = "git://github.com/jakevn/bitbuf"
 
-[[bin]]
-
-name = "simple_client"
-path = "examples/simple_client.rs"
-
-[[bin]]
-
-name = "simple_server"
-path = "examples/simple_server.rs"
+[dependencies]
+time = "*"
 
 [profile.dev]
 opt-level = 3
