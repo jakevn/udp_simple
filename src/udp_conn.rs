@@ -1,8 +1,7 @@
-use std::old_io::net::ip::SocketAddr;
-use std::slice::bytes::copy_memory;
+use std::net::SocketAddr;
 use udp_sock::UdpSock;
 use udp_reliable::UdpReliable;
-use std::time::duration::Duration;
+use time::Duration;
 
 pub struct UdpConn {
     address: SocketAddr,

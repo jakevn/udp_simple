@@ -1,9 +1,8 @@
-
-use std::old_io::net::udp::UdpSocket;
-use std::old_io::net::ip::SocketAddr;
+use std::net::UdpSocket;
+use std::net::SocketAddr;
 use std::collections::HashSet;
 use std::collections::HashMap;
-use std::time::duration::Duration;
+use time::Duration;
 
 use time::SteadyTime;
 

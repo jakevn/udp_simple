@@ -1,5 +1,3 @@
-#![feature(slicing_syntax)]
-
 #![crate_name = "udp_simple"]
 #![crate_type="lib"]
 

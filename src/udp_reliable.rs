@@ -1,5 +1,4 @@
 use bitbuf::BitBuf;
-use std::num::FromPrimitive;
 
 pub struct UdpReliable {
     write_buff: Vec<u8>,
@@ -72,7 +71,7 @@ impl UdpReliable {
 
     fn create_header(&self, time: u32) -> ReliableHeader {
         let ackt: u16 = if self.last_recv_time > time {
-            FromPrimitive::from_u32(time - self.last_recv_time).unwrap()
+            (time as u16 - self.last_recv_time as u16)
         } else { 
             0u16
         };
