@@ -1,11 +1,10 @@
 use bitbuf::BitBuf;
+use std::ptr;
 
 pub struct UdpReliable {
-    write_buff: Vec<u8>,
-    buff_sent: bool,
-    buff_pos: u16,
-    ordered_buff: Vec<Vec<u8>>,
-    unacked_sent: Vec<Vec<u8>>,
+    write_buff: BitBuf,
+    ordered_buff: Vec<BitBuf>,
+    unacked_sent: Vec<BitBuf>,
     newest_remote_seq: u16,
     local_seq: u16,
     ack_hist: u64,
@@ -27,9 +26,7 @@ impl UdpReliable {
 
     pub fn new() -> UdpReliable {
         UdpReliable {
-            write_buff: Vec::new(),
-            buff_sent: false,
-            buff_pos: 4,
+            write_buff: BitBuf::with_len(1400),
             ordered_buff: Vec::new(),
             unacked_sent: Vec::new(),
             newest_remote_seq: 0,
@@ -45,8 +42,8 @@ impl UdpReliable {
     // If we have a non-empty buffer, we will write the reliable header
     // and return the ready-to-send byte buffer and update state to reflect
     // that it is now sent. If buffer not ready to send, return None:
-    pub fn get_buff_for_sending(&mut self, time: u32) -> Option<&Vec<u8>> {
-        if self.buff_pos <= 19 {
+    pub fn get_buff_for_sending(&mut self, time: u32) -> Option<&BitBuf> {
+        if self.write_buff.pos <= 19 {
             None
         } else {
             self.buff_sent = true;
@@ -88,17 +85,45 @@ impl UdpReliable {
         self.local_seq = (self.local_seq + 1) & 32767;
     }
 
-    /*fn read_header(buff: &[u8, ..1400]) -> ReliableHeader {
-
-    }*/
-
-    /*pub fn reset_buff(&mut self) {
+    pub fn reset_buff(&mut self) {
         self.advance_local_seq();
         self.recv_since_last_send = 0;
-        self.unacked_sent.push(self.write_buff);
-        self.write_buff = Vec::new();
+        let mut write_buff = BitBuf::with_len(1400);
+        unsafe {
+            let buff_ptr: *mut BitBuf = &mut write_buff;
+            let self_buff_ptr: *mut BitBuf = &mut self.write_buff;
+            ptr::swap(buff_ptr, self_buff_ptr);
+        }
+        self.unacked_sent.push(write_buff);
         self.buff_sent = false;
         self.buff_pos = 19;
-    }*/
-
+    }
 }
+
+fn read_header(buf: &mut BitBuf) -> ReliableHeader {
+    ReliableHeader {
+        obj_seq: trim_seq(buf.read_u16()),
+        ack_seq: trim_seq(buf.read_u16()),
+        ack_hist: buf.read_u64(),
+        ack_time: buf.read_u16(),
+        send_time: 0,
+    }
+}
+
+fn write_header(header: &ReliableHeader, buf: &mut BitBuf) {
+    buf.write_u16(pad_seq(header.obj_seq));
+    buf.write_u16(pad_seq(header.ack_seq));
+    buf.write_u64(header.ack_hist);
+    buf.write_u16(header.ack_time);
+}
+
+fn trim_seq(seq: u16) -> u16 {
+   seq >> 1
+}
+
+fn pad_seq(seq: u16) -> u16 {
+   let result = seq << 1;
+   result | ((1 << 1) - 1)
+}
+
+

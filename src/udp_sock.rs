@@ -2,8 +2,8 @@ use std::net::UdpSocket;
 use std::net::SocketAddr;
 use std::collections::HashSet;
 use std::collections::HashMap;
-use time::Duration;
 
+use time::Duration;
 use time::SteadyTime;
 
 use udp_conn::UdpConn;
