@@ -2,8 +2,8 @@ use bitbuf::BitBuf;
 use std::ptr;
 
 pub struct UdpReliable {
-    write_buff: BitBuf,
-    ordered_buff: Vec<BitBuf>,
+    write_buf: BitBuf,
+    ordered_buf: Vec<BitBuf>,
     unacked_sent: Vec<BitBuf>,
     newest_remote_seq: u16,
     local_seq: u16,
@@ -26,8 +26,8 @@ impl UdpReliable {
 
     pub fn new() -> UdpReliable {
         UdpReliable {
-            write_buff: BitBuf::with_len(1400),
-            ordered_buff: Vec::new(),
+            write_buf: BitBuf::with_len(1400),
+            ordered_buf: Vec::new(),
             unacked_sent: Vec::new(),
             newest_remote_seq: 0,
             local_seq: 0,
@@ -42,14 +42,11 @@ impl UdpReliable {
     // If we have a non-empty buffer, we will write the reliable header
     // and return the ready-to-send byte buffer and update state to reflect
     // that it is now sent. If buffer not ready to send, return None:
-    pub fn get_buff_for_sending(&mut self, time: u32) -> Option<&BitBuf> {
-        if self.write_buff.pos <= 19 {
+    pub fn get_buff_for_sending(&mut self, time: u32) -> Option<BitBuf> {
+        if self.write_buf.byte_pos() <= 19 {
             None
         } else {
-            self.buff_sent = true;
-            let header = self.create_header(time);
-
-            Some(&self.write_buff)
+            Some(self.reset_buff())
         }
     }
 
@@ -68,7 +65,7 @@ impl UdpReliable {
 
     fn create_header(&self, time: u32) -> ReliableHeader {
         let ackt: u16 = if self.last_recv_time > time {
-            (time as u16 - self.last_recv_time as u16)
+            time as u16 - self.last_recv_time as u16
         } else { 
             0u16
         };
@@ -85,18 +82,18 @@ impl UdpReliable {
         self.local_seq = (self.local_seq + 1) & 32767;
     }
 
-    pub fn reset_buff(&mut self) {
+    pub fn reset_buff(&mut self) -> BitBuf {
         self.advance_local_seq();
         self.recv_since_last_send = 0;
-        let mut write_buff = BitBuf::with_len(1400);
+        let mut write_buf = BitBuf::with_len(1400);
         unsafe {
-            let buff_ptr: *mut BitBuf = &mut write_buff;
-            let self_buff_ptr: *mut BitBuf = &mut self.write_buff;
+            let buff_ptr: *mut BitBuf = &mut write_buf;
+            let self_buff_ptr: *mut BitBuf = &mut self.write_buf;
             ptr::swap(buff_ptr, self_buff_ptr);
         }
-        self.unacked_sent.push(write_buff);
-        self.buff_sent = false;
-        self.buff_pos = 19;
+        let send_buf = write_buf.clone();
+        self.unacked_sent.push(write_buf);
+        send_buf
     }
 }
 
@@ -122,8 +119,6 @@ fn trim_seq(seq: u16) -> u16 {
 }
 
 fn pad_seq(seq: u16) -> u16 {
-   let result = seq << 1;
-   result | ((1 << 1) - 1)
+   (seq << 1) | ((1 << 1) - 1)
 }
-
 
