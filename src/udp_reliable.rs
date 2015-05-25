@@ -42,11 +42,11 @@ impl UdpReliable {
     // If we have a non-empty buffer, we will write the reliable header
     // and return the ready-to-send byte buffer and update state to reflect
     // that it is now sent. If buffer not ready to send, return None:
-    pub fn get_buff_for_sending(&mut self, time: u32) -> Option<BitBuf> {
-        if self.write_buf.byte_pos() <= 19 {
+    pub fn get_buf_for_sending(&mut self, time: u32) -> Option<BitBuf> {
+        if self.write_buf.byte_pos() == 0 {
             None
         } else {
-            Some(self.reset_buff())
+            Some(self.reset_buf())
         }
     }
 
@@ -57,10 +57,22 @@ impl UdpReliable {
     pub fn get_ack(&mut self, current_time: u32) -> Option<ReliableHeader> {
         if self.recv_since_last_send > 16 || 
             (self.recv_since_last_send > 0 && current_time - self.last_send_time > 33) {
-            None
+            Some(self.create_header(current_time))
         } else {
             None
         }
+    }
+
+    fn write(&mut self, data: Vec<u8>, time: u32) -> Option<BitBuf> {
+        let mut send_buf = None;
+        if !self.write_buf.can_read_bytes(data.len()) {
+            send_buf = Some(self.reset_buf());
+        } else if self.write_buf.byte_pos() == 0 {
+            let header = self.create_header(time);
+            write_header(&header, &mut self.write_buf)
+        }
+        self.write_buf.write_u8_slice(&data[..]);
+        send_buf
     }
 
     fn create_header(&self, time: u32) -> ReliableHeader {
@@ -82,7 +94,7 @@ impl UdpReliable {
         self.local_seq = (self.local_seq + 1) & 32767;
     }
 
-    pub fn reset_buff(&mut self) -> BitBuf {
+    pub fn reset_buf(&mut self) -> BitBuf {
         self.advance_local_seq();
         self.recv_since_last_send = 0;
         let mut write_buf = BitBuf::with_len(1400);
@@ -121,4 +133,3 @@ fn trim_seq(seq: u16) -> u16 {
 fn pad_seq(seq: u16) -> u16 {
    (seq << 1) | ((1 << 1) - 1)
 }
-
